@@ -1,0 +1,459 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#0b0d0f" />
+    <meta name="description" content="A measured field guide to running Qwen3-8B with llama.cpp on an overclocked 8 GB Raspberry Pi 5." />
+    <meta property="og:title" content="Local LLM Lab — Raspberry Pi 5 at 3.0 GHz" />
+    <meta property="og:description" content="Overclock, benchmark, and verify Qwen3-8B on an 8 GB Raspberry Pi 5." />
+    <meta property="og:type" content="article" />
+    <meta property="og:image" content="assets/og-local-llm-lab.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <title>Local LLM Lab — Raspberry Pi 5 Overclock &amp; Qwen3 Benchmark</title>
+    <link rel="stylesheet" href="styles.css" />
+    <script src="script.js" defer></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+
+    <header class="site-header" data-header>
+      <a class="brand" href="#top" aria-label="Local LLM Lab home">
+        <span class="brand-mark" aria-hidden="true">π</span>
+        <span>LOCAL LLM LAB</span>
+      </a>
+      <button class="menu-button" type="button" aria-expanded="false" aria-controls="site-nav" data-menu-button>
+        <span></span><span></span><span></span><span class="sr-only">Toggle navigation</span>
+      </button>
+      <nav id="site-nav" class="site-nav" aria-label="Primary navigation" data-nav>
+        <a href="#results">Results</a>
+        <a href="#overclock">Overclock</a>
+        <a href="#llm">LLM setup</a>
+        <a href="#testing">Test plan</a>
+        <a class="nav-cta" href="#downloads">Test kit</a>
+      </nav>
+    </header>
+
+    <main id="main">
+      <section class="hero" id="top">
+        <div class="hero-grid" aria-hidden="true"></div>
+        <div class="hero-copy">
+          <p class="eyebrow"><span>FIELD NOTE 01</span> · UPDATED AUG 2026</p>
+          <h1>Eight gigabytes.<br /><em>One local LLM.</em><br />No cloud required.</h1>
+          <p class="hero-lede">
+            A practical, measured guide to overclocking a Raspberry Pi 5 and running
+            <strong>Qwen3-8B Q4_K_M</strong> with llama.cpp—built from real tests at 2.6 and 2.8 GHz,
+            with a cautious path to 3.0 GHz.
+          </p>
+          <div class="hero-actions">
+            <a class="button button-primary" href="#results">Explore the results</a>
+            <a class="button button-secondary" href="#overclock">Build the 3.0 GHz profile</a>
+          </div>
+          <ul class="hero-specs" aria-label="Test system summary">
+            <li><span>BOARD</span><strong>Pi 5 · 8 GB</strong></li>
+            <li><span>MODEL</span><strong>Qwen3 · 8B</strong></li>
+            <li><span>RUNTIME</span><strong>llama.cpp</strong></li>
+            <li><span>QUANT</span><strong>Q4_K_M</strong></li>
+          </ul>
+        </div>
+
+        <aside class="hero-console" aria-label="Measured benchmark snapshot">
+          <div class="console-bar"><span></span><span></span><span></span><code>pi5://qwen/benchmark</code></div>
+          <div class="console-body">
+            <p class="console-label">MEASURED AT 2.8 GHz</p>
+            <div class="console-primary"><strong>2.15</strong><span>generation<br />tokens / sec</span></div>
+            <div class="console-row"><span>Prompt processing</span><strong>11.18 tok/s</strong></div>
+            <div class="console-row"><span>Peak observed temp</span><strong>≈55 °C</strong></div>
+            <div class="console-row"><span>Memory in use</span><strong>5.2 / 7.87 GB</strong></div>
+            <div class="console-row"><span>Thermal throttle</span><strong class="status-good">NONE</strong></div>
+            <div class="pulse-line"><span></span></div>
+            <p class="console-foot">A quiet little machine doing improbably large work.</p>
+          </div>
+        </aside>
+      </section>
+
+      <section class="ticker" aria-label="Key findings">
+        <div><span>+5.9%</span> PROMPT SPEED</div>
+        <div><span>+0.9%</span> GENERATION SPEED</div>
+        <div><span>2.45 t/s</span> 3.0 GHz PEAK</div>
+        <div><span>2.67 GB</span> RAM HEADROOM</div>
+      </section>
+
+      <section class="section intro" id="results">
+        <div class="section-heading">
+          <p class="kicker">01 / THE RESULT</p>
+          <h2>The faster clock wins.<br /><span>Just not everywhere.</span></h2>
+        </div>
+        <div class="intro-copy">
+          <p class="lead">
+            Moving from 2.6 to 2.8 GHz clearly accelerated prompt ingestion, but token generation barely moved.
+            That is the signature of a workload becoming constrained by memory bandwidth rather than raw CPU frequency.
+          </p>
+          <p>
+            The recommendation is straightforward: 2.8 GHz is the confirmed daily profile at roughly 55 °C with
+            <code>throttled=0x0</code>. A first 3.0 GHz <code>llama-bench</code> run has now reached 11.50 pp128
+            and 2.45 tg128 tokens/s, but it still needs a longer stability and temperature record.
+          </p>
+        </div>
+
+        <div class="comparison-panel">
+          <div class="comparison-head">
+            <div>
+              <span class="label">SAME INPUT</span>
+              <strong>372 prompt tokens</strong>
+            </div>
+            <p>Observed UI timings · single run per clock</p>
+          </div>
+          <div class="metric-chart">
+            <div class="chart-copy">
+              <span>Prompt processing</span>
+              <strong>+5.9%</strong>
+              <small>CPU clock still matters here</small>
+            </div>
+            <div class="bars" aria-label="Prompt speed: 10.56 tokens per second at 2.6 GHz and 11.18 at 2.8 GHz">
+              <div class="bar-row"><span>2.6 GHz</span><div class="bar"><i style="--width:94.5%"></i></div><strong>10.56</strong></div>
+              <div class="bar-row accent"><span>2.8 GHz</span><div class="bar"><i style="--width:100%"></i></div><strong>11.18</strong></div>
+            </div>
+          </div>
+          <div class="metric-chart">
+            <div class="chart-copy">
+              <span>Token generation</span>
+              <strong>+0.9%</strong>
+              <small>Mostly memory-bound</small>
+            </div>
+            <div class="bars" aria-label="Generation speed: 2.13 tokens per second at 2.6 GHz and 2.15 at 2.8 GHz">
+              <div class="bar-row"><span>2.6 GHz</span><div class="bar"><i style="--width:99.1%"></i></div><strong>2.13</strong></div>
+              <div class="bar-row accent"><span>2.8 GHz</span><div class="bar"><i style="--width:100%"></i></div><strong>2.15</strong></div>
+            </div>
+          </div>
+          <p class="fine-print">
+            Total wall time is not comparable: the 2.6 GHz run generated 413 tokens, while the 2.8 GHz run generated 523.
+            Compare throughput, not completion time.
+          </p>
+        </div>
+
+        <div class="three-ghz-result">
+          <div class="three-ghz-title">
+            <p class="label">NEW · LLAMA-BENCH AT 3.0 GHz</p>
+            <h3>A promising peak.<br /><span>With visible run-to-run variation.</span></h3>
+            <p>
+              Two four-thread runs used the same 4.68 GiB Qwen3-8B Q4_K_M model. Prompt processing stayed tightly grouped,
+              while generation moved from 2.45 to 2.30 tokens/s. More repetitions are needed before declaring a stable median.
+            </p>
+          </div>
+          <div class="three-ghz-numbers">
+            <div><span>RUN 1 · PP128</span><strong>11.50</strong><small>± 0.17 tok/s</small></div>
+            <div><span>RUN 2 · PP128</span><strong>11.45</strong><small>± 0.12 tok/s</small></div>
+            <div><span>RUN 1 · TG128</span><strong>2.45</strong><small>± 0.00 tok/s</small></div>
+            <div><span>RUN 2 · TG128</span><strong>2.30</strong><small>± 0.01 tok/s</small></div>
+          </div>
+          <p class="method-warning"><strong>Comparison boundary:</strong> <code>llama-bench pp128/tg128</code> is not the same workload as the earlier web-interface runs. These values document the 3.0 GHz test, but they should not be used to calculate a direct percentage gain against 2.6 or 2.8 GHz.</p>
+        </div>
+      </section>
+
+      <section class="section evidence-section" aria-labelledby="evidence-title">
+        <div class="section-heading compact">
+          <p class="kicker">RAW EVIDENCE</p>
+          <h2 id="evidence-title">The runs, as recorded.</h2>
+        </div>
+        <div class="evidence-grid">
+          <figure>
+            <button class="image-button" type="button" data-lightbox="assets/benchmark-2-6ghz.png" aria-label="Open the 2.6 GHz benchmark screenshot">
+              <img src="assets/benchmark-2-6ghz.png" alt="Qwen3 benchmark interface showing 10.56 prompt tokens per second and 2.13 generated tokens per second at 2.6 GHz" loading="lazy" />
+            </button>
+            <figcaption><span>RUN A</span><strong>2.6 GHz</strong><small>372 prompt · 413 generated · 2.13 tok/s</small></figcaption>
+          </figure>
+          <figure>
+            <button class="image-button" type="button" data-lightbox="assets/benchmark-2-8ghz.png" aria-label="Open the 2.8 GHz benchmark screenshot">
+              <img src="assets/benchmark-2-8ghz.png" alt="Qwen3 benchmark interface showing 11.18 prompt tokens per second and 2.15 generated tokens per second at 2.8 GHz" loading="lazy" />
+            </button>
+            <figcaption><span>RUN B</span><strong>2.8 GHz</strong><small>372 prompt · 523 generated · 2.15 tok/s</small></figcaption>
+          </figure>
+          <figure class="evidence-wide">
+            <button class="image-button" type="button" data-lightbox="assets/benchmark-3-0ghz.png" aria-label="Open the 3.0 GHz llama-bench screenshot">
+              <img src="assets/benchmark-3-0ghz.png" alt="Terminal output from two Qwen3-8B llama-bench runs at 3.0 GHz showing pp128 between 11.45 and 11.50 tokens per second and tg128 between 2.30 and 2.45 tokens per second" loading="lazy" />
+            </button>
+            <figcaption><span>RUN C</span><strong>3.0 GHz · llama-bench</strong><small>2 runs · pp128 11.45–11.50 · tg128 2.30–2.45 tok/s</small></figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <section class="section rig-section" id="rig">
+        <div class="section-heading">
+          <p class="kicker">02 / THE RIG</p>
+          <h2>Know what you are<br /><span>actually testing.</span></h2>
+        </div>
+        <div class="rig-layout">
+          <div class="spec-stack">
+            <div class="spec"><span>Compute</span><strong>Raspberry Pi 5</strong><small>4× Arm Cortex-A76 · 2.4 GHz stock</small></div>
+            <div class="spec"><span>Memory</span><strong>8 GB LPDDR4X</strong><small>7.87 GB visible to Linux</small></div>
+            <div class="spec"><span>Model</span><strong>Qwen3-8B</strong><small>Q4_K_M GGUF · 4.68 GiB</small></div>
+            <div class="spec"><span>Inference</span><strong>llama.cpp server</strong><small>4 threads · one slot · temperature 0.2</small></div>
+          </div>
+          <div class="memory-card">
+            <p class="label">MEMORY MAP · OBSERVED</p>
+            <div class="memory-number"><strong>5.2</strong><span>GB used</span></div>
+            <div class="memory-track" aria-label="5.2 of 7.87 gigabytes used"><i></i></div>
+            <div class="memory-legend"><span>Model + runtime + OS</span><span>2.67 GB headroom</span></div>
+            <p>
+              The GGUF file is not the entire memory budget. Linux, runtime buffers, and the KV cache all need space.
+              A 4,096-token context is a sensible balance on this machine; 8,192 may fit, but reduces safety margin.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section class="section overclock-section" id="overclock">
+        <div class="section-heading light">
+          <p class="kicker">03 / OVERCLOCK</p>
+          <h2>Three gigahertz,<br /><span>one careful step at a time.</span></h2>
+          <p>
+            The stable 2.8 GHz result is the control. Change one variable at a time, keep a recovery copy,
+            and only accept 3.0 GHz after sustained error-free testing.
+          </p>
+        </div>
+
+        <div class="warning-card">
+          <div class="warning-icon">!</div>
+          <div>
+            <strong>Overclocking is silicon-specific.</strong>
+            <p>It can cause crashes, silent calculation errors, storage corruption, higher power draw, and shorter component life. A configuration stable on one Pi may fail on another.</p>
+          </div>
+        </div>
+
+        <div class="steps">
+          <article class="step">
+            <span class="step-number">01</span>
+            <div>
+              <h3>Back up the boot configuration</h3>
+              <p>Raspberry Pi OS reads these settings before Linux starts. Make recovery possible before changing anything.</p>
+              <div class="code-block"><div class="code-head"><span>TERMINAL</span><button type="button" data-copy>Copy</button></div><pre><code>sudo cp /boot/firmware/config.txt \
+  /boot/firmware/config.txt.bak-2800</code></pre></div>
+            </div>
+          </article>
+
+          <article class="step">
+            <span class="step-number">02</span>
+            <div>
+              <h3>Change the existing overclock block</h3>
+              <p>Edit existing values rather than appending duplicates. For llama.cpp, test the CPU first; the GPU clock does not accelerate CPU inference.</p>
+              <div class="code-block featured"><div class="code-head"><span>/BOOT/FIRMWARE/CONFIG.TXT</span><button type="button" data-copy>Copy</button></div><pre><code>[all]
+over_voltage_delta=50000
+arm_freq=3000</code></pre></div>
+              <div class="inline-note"><strong>Why no <code>gpu_freq</code>?</strong> The model runs on the Arm cores. Adding <code>gpu_freq=1000</code> creates another stability variable without a meaningful llama.cpp speed benefit. Test it separately only for a GPU workload.</div>
+            </div>
+          </article>
+
+          <article class="step">
+            <span class="step-number">03</span>
+            <div>
+              <h3>Reboot, verify, then load the system</h3>
+              <p>Do not use <code>force_turbo=1</code>. Let dynamic frequency scaling reduce clock and voltage when the board is idle.</p>
+              <div class="code-block"><div class="code-head"><span>TERMINAL</span><button type="button" data-copy>Copy</button></div><pre><code>sudo reboot
+
+# after reconnecting
+vcgencmd get_config arm_freq
+vcgencmd get_config over_voltage_delta
+vcgencmd get_throttled</code></pre></div>
+            </div>
+          </article>
+        </div>
+
+        <div class="recovery-panel">
+          <div><span class="label">RECOVERY PLAN</span><h3>If the Pi does not boot</h3></div>
+          <p>Power down, attach the boot media to another computer, open the boot partition, and restore <code>config.txt.bak-2800</code> as <code>config.txt</code>. Never test a risky clock without this escape route.</p>
+        </div>
+      </section>
+
+      <section class="section llm-section" id="llm">
+        <div class="section-heading">
+          <p class="kicker">04 / LLM SERVER</p>
+          <h2>Give the model room.<br /><span>Not all the room.</span></h2>
+        </div>
+        <div class="server-card">
+          <div class="server-top">
+            <div class="traffic"><span></span><span></span><span></span></div>
+            <code>qwen.service</code>
+            <span class="online">● ACTIVE</span>
+          </div>
+          <div class="server-body">
+            <p class="prompt"><span>$</span> pgrep -af llama-server</p>
+            <pre><code>/home/niko/llama.cpp/build/bin/llama-server \
+  -m /home/niko/models/Qwen3-8B-Q4_K_M.gguf \
+  --host 0.0.0.0 --port 8080 \
+  -c 4096 -np 1 -t 4 --temp 0.2</code></pre>
+          </div>
+        </div>
+
+        <div class="context-grid">
+          <article><span>2,048</span><h3>Lean</h3><p>Lowest KV-cache footprint. Best when conversations are short and maximum headroom matters.</p></article>
+          <article class="recommended"><span>4,096</span><h3>Balanced</h3><p>The recommended setting for this 8 GB system: useful history with comfortable observed RAM reserve.</p><b>RECOMMENDED</b></article>
+          <article><span>8,192</span><h3>Experimental</h3><p>Likely possible, but test peak <em>available</em> memory and swap activity during long prompts.</p></article>
+        </div>
+
+        <div class="two-column-code">
+          <div>
+            <h3>Change the context</h3>
+            <p>The service is named <code>qwen.service</code>, not <code>llama-server.service</code>.</p>
+            <div class="code-block"><div class="code-head"><span>TERMINAL</span><button type="button" data-copy>Copy</button></div><pre><code>sudo systemctl edit --full qwen.service
+
+# change -c 2048 to:
+-c 4096
+
+sudo systemctl daemon-reload
+sudo systemctl restart qwen.service</code></pre></div>
+          </div>
+          <div>
+            <h3>Confirm the live process</h3>
+            <p>Trust the running command line and log—not the file you intended to edit.</p>
+            <div class="code-block"><div class="code-head"><span>TERMINAL</span><button type="button" data-copy>Copy</button></div><pre><code>pgrep -af llama-server
+journalctl -u qwen.service -n 30 --no-pager
+free -h</code></pre></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section testing-section" id="testing">
+        <div class="section-heading light">
+          <p class="kicker">05 / TEST PROTOCOL</p>
+          <h2>A fast result is nice.<br /><span>A repeatable result is useful.</span></h2>
+        </div>
+
+        <div class="protocol-grid">
+          <article><span>01</span><h3>Hold inputs constant</h3><p>Use the identical prompt, context size, sampling parameters, thread count, model file, and maximum output length.</p></article>
+          <article><span>02</span><h3>Warm the model</h3><p>Discard the first run after startup. It includes cold filesystem pages and is not comparable with later runs.</p></article>
+          <article><span>03</span><h3>Repeat five times</h3><p>Record prompt tok/s and generation tok/s separately. Use the median to reduce noise from background activity.</p></article>
+          <article><span>04</span><h3>Watch the machine</h3><p>Track actual clock, temperature, throttling, available RAM, and swap while the response is generated.</p></article>
+          <article><span>05</span><h3>Test for errors</h3><p>A completed response is not a stability test. Run sustained CPU verification and check kernel logs for hardware symptoms.</p></article>
+          <article><span>06</span><h3>Change one variable</h3><p>CPU, voltage, GPU, context, and model quantization should never all change between benchmark runs.</p></article>
+        </div>
+
+        <div class="monitor-card">
+          <div>
+            <p class="label">LIVE TELEMETRY</p>
+            <h3>Keep this visible during every run.</h3>
+            <ul>
+              <li><strong>Clock:</strong> close to the configured maximum under full load</li>
+              <li><strong>Temperature:</strong> comfortably below the 85 °C thermal limit</li>
+              <li><strong>Throttle:</strong> <code>0x0</code> before and after testing</li>
+              <li><strong>Memory:</strong> at least ~1 GB available, with no sustained swap growth</li>
+            </ul>
+          </div>
+          <div class="code-block dark"><div class="code-head"><span>TERMINAL A</span><button type="button" data-copy>Copy</button></div><pre><code>watch -n 1 '
+  vcgencmd measure_clock arm
+  vcgencmd measure_temp
+  vcgencmd get_throttled
+  free -h
+'</code></pre></div>
+        </div>
+
+        <div class="test-sequence">
+          <div class="sequence-line" aria-hidden="true"></div>
+          <div><span>5 min</span><strong>Boot sanity</strong><small>Verify clock, voltage configuration, idle temperature</small></div>
+          <div><span>30 min</span><strong>CPU stress</strong><small>All four cores, verification enabled, telemetry visible</small></div>
+          <div><span>5×</span><strong>LLM benchmark</strong><small>Same prompt and output cap, record median throughput</small></div>
+          <div><span>60 min</span><strong>Mixed soak</strong><small>Long-context generation plus system and kernel-log review</small></div>
+        </div>
+
+        <div class="two-column-code stress-code">
+          <div>
+            <h3>CPU verification</h3>
+            <div class="code-block"><div class="code-head"><span>TERMINAL B</span><button type="button" data-copy>Copy</button></div><pre><code>sudo apt install stress-ng
+
+stress-ng --cpu 4 \
+  --cpu-method matrixprod \
+  --verify --timeout 30m \
+  --metrics-brief</code></pre></div>
+          </div>
+          <div>
+            <h3>Post-test health check</h3>
+            <div class="code-block"><div class="code-head"><span>TERMINAL</span><button type="button" data-copy>Copy</button></div><pre><code>vcgencmd get_throttled
+journalctl -k -b --no-pager | \
+  grep -Ei 'error|fail|voltage|thermal|timeout'
+
+free -h</code></pre></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section decision-section" id="decision">
+        <div class="section-heading">
+          <p class="kicker">06 / DECISION</p>
+          <h2>Choose the profile<br /><span>that matches the job.</span></h2>
+        </div>
+        <div class="decision-table-wrap">
+          <table>
+            <thead><tr><th>Profile</th><th>Best for</th><th>Expected behavior</th><th>Verdict</th></tr></thead>
+            <tbody>
+              <tr><td><strong>2.6 GHz</strong></td><td>Efficiency and conservative uptime</td><td>2.13 generation tok/s observed</td><td><span class="pill">SAFE CHOICE</span></td></tr>
+              <tr class="selected"><td><strong>2.8 GHz</strong></td><td>Daily local LLM use</td><td>2.15 tok/s, ≈55 °C, no throttling observed</td><td><span class="pill hot">CURRENT PICK</span></td></tr>
+              <tr><td><strong>3.0 GHz</strong></td><td>Measured experimentation</td><td>llama-bench: 11.45–11.50 pp128 and 2.30–2.45 tg128 tok/s</td><td><span class="pill outline">PROMISING · SOAK TEST</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <blockquote>
+          <p>“The interesting lesson is not that the Pi can run an 8B model. It is that the bottleneck moves: first compute, then memory, then patience.”</p>
+          <footer>— Local LLM Lab notebook</footer>
+        </blockquote>
+      </section>
+
+      <section class="section troubleshoot-section">
+        <div class="section-heading compact light">
+          <p class="kicker">TROUBLESHOOTING</p>
+          <h2>Signals worth respecting.</h2>
+        </div>
+        <div class="trouble-list">
+          <details><summary><span>The Pi reboots or freezes under load</span><b>+</b></summary><p>Return to 2.8 GHz first. If 3.0 GHz is essential, verify power delivery and cooling before changing voltage. Do not keep raising voltage to rescue a poor silicon sample.</p></details>
+          <details><summary><span><code>get_throttled</code> is not <code>0x0</code></span><b>+</b></summary><p>The bitmask records current and historical undervoltage or thermal events. Reboot only after fixing the cause, then retest from a clean state.</p></details>
+          <details><summary><span>The model gets slower during long chats</span><b>+</b></summary><p>Longer prompts require more prompt evaluation, and a growing KV cache consumes memory. Check context size, available RAM, swap, and whether old conversation history is being resent.</p></details>
+          <details><summary><span>Higher quantization does not increase tok/s</span><b>+</b></summary><p>That is expected. Q5 or Q8 usually improves fidelity while increasing model size and memory traffic. Q4_K_M is the balanced choice here; smaller quants or fewer parameters usually improve speed.</p></details>
+          <details><summary><span>The server will not start after editing</span><b>+</b></summary><p>Run <code>systemctl status qwen.service</code> and inspect the journal. Confirm the binary and GGUF paths and ensure the edited <code>ExecStart</code> remains one valid line.</p></details>
+        </div>
+      </section>
+
+      <section class="section downloads-section" id="downloads">
+        <div class="downloads-copy">
+          <p class="kicker">TAKE IT TO THE PI</p>
+          <h2>The compact test kit.</h2>
+          <p>Three plain-text files you can inspect, edit, and copy to your own system. Nothing runs automatically.</p>
+        </div>
+        <div class="download-list">
+          <a href="downloads/pi5-3ghz-config.txt" download><span>01</span><div><strong>3.0 GHz configuration</strong><small>Safe staged CPU-first profile</small></div><b>↓</b></a>
+          <a href="downloads/qwen.service.example" download><span>02</span><div><strong>qwen.service example</strong><small>Qwen3-8B · 4,096-token context</small></div><b>↓</b></a>
+          <a href="downloads/test-commands.sh" download><span>03</span><div><strong>Test commands</strong><small>Clock, temperature, throttle, RAM, process</small></div><b>↓</b></a>
+        </div>
+      </section>
+
+      <section class="section sources-section">
+        <p class="kicker">SOURCES &amp; NOTES</p>
+        <div class="sources-grid">
+          <div>
+            <h3>Primary documentation</h3>
+            <a href="https://www.raspberrypi.com/documentation/computers/config_txt.html#overclocking-options" target="_blank" rel="noreferrer">Raspberry Pi · Overclocking options ↗</a>
+            <a href="https://github.com/ggml-org/llama.cpp" target="_blank" rel="noreferrer">ggml-org · llama.cpp repository ↗</a>
+            <a href="https://huggingface.co/Qwen" target="_blank" rel="noreferrer">Qwen model organization ↗</a>
+          </div>
+          <div>
+            <h3>Method note</h3>
+            <p>The figures on this page are observations from one 8 GB Raspberry Pi 5. They are not universal performance claims. Reproduce them on your own hardware before drawing conclusions.</p>
+          </div>
+          <div>
+            <h3>Safety note</h3>
+            <p>Overclocking operates hardware outside stock specifications. Keep recoverable backups and accept that instability may be silent, not dramatic.</p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <a class="brand" href="#top"><span class="brand-mark" aria-hidden="true">π</span><span>LOCAL LLM LAB</span></a>
+      <p>Built from a real Raspberry Pi 5 experiment.</p>
+      <a href="#top">Back to top ↑</a>
+    </footer>
+
+    <dialog class="lightbox" data-lightbox-dialog>
+      <button type="button" aria-label="Close image" data-lightbox-close>×</button>
+      <img src="" alt="Expanded benchmark screenshot" data-lightbox-image />
+    </dialog>
+  </body>
+</html>
