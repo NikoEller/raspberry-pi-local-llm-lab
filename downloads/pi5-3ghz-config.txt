@@ -1,0 +1,10 @@
+# Raspberry Pi 5 — staged 3.0 GHz CPU profile
+# Add these lines once, under the existing [all] section in:
+# /boot/firmware/config.txt
+
+over_voltage_delta=50000
+arm_freq=3000
+
+# Optional only; llama.cpp does not use the Pi GPU for inference.
+# Test CPU stability first before enabling this separately.
+# gpu_freq=1000

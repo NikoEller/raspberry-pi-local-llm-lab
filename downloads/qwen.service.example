@@ -1,0 +1,14 @@
+[Unit]
+Description=Qwen3 8B llama.cpp Webserver
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=niko
+ExecStart=/home/niko/llama.cpp/build/bin/llama-server -m /home/niko/models/Qwen3-8B-Q4_K_M.gguf --host 0.0.0.0 --port 8080 -c 4096 -np 1 -t 4 --temp 0.2
+Restart=on-failure
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target
